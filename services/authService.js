@@ -21,12 +21,7 @@ exports.refresh = async (refreshToken, req) => {
         await tokenRepo.revokeUserTokens(payload.userId);
         throw new Error('Refresh token reuse detected');
     }
-
-    if (record.ip !== req.ip || record.ua !== req.headers['user-agent']) {
-        await tokenRepo.invalidateToken(payload.tokenId);
-        throw new Error('Suspicious device detected');
-    }
-
+    
     await tokenRepo.invalidateToken(payload.tokenId);
     const user = await getUserByUsername(payload.username);
     if (!user) {
