@@ -1,42 +1,44 @@
 const bcrypt = require('bcrypt')
 const jwtUtils = require('../utils/jwtUtils')
 const tokenRepo = require('../repostiories/tokenRepository')
-const { createUser, getUserByUsername } = require('../repostiories/userRepository');
-const { getAccessToken, getRefreshToken } = require('../utils/jwtUtils')
+const { getUserByUsername } = require('../repostiories/userRepository');
 
 exports.login = async (username, password, req) => {
     const user = await getUserByUsername(username);
-    if (!user || !bcrypt.compare(user.password, password))
+    if (!user || !(await bcrypt.compare(password, user.password)))
         throw new Error('Invalid credentials');
     const accessToken = jwtUtils.getAccessToken(user);
     const { refreshToken, tokenId } = await jwtUtils.getRefreshToken(user);
 
-    tokenRepo.saveToken(tokenId, { userId: user.id, valid: true, ip: req.ip, ua: req.headers['user-agent'] });
+    await tokenRepo.saveToken(tokenId, { userId: user.id, valid: true, ip: req.ip, ua: req.headers['user-agent'] });
     return { accessToken, refreshToken };
 }
 exports.refresh = async (refreshToken, req) => {
     const payload = jwtUtils.verifyRefreshToken(refreshToken);
-    const record = tokenRepo.getToken(payload.tokenId);
+    const record = await tokenRepo.getToken(payload.tokenId);
 
     if (!record || !record.valid) {
-        tokenRepo.revokeUserTokens(payload.userId);
+        await tokenRepo.revokeUserTokens(payload.userId);
         throw new Error('Refresh token reuse detected');
     }
 
     if (record.ip !== req.ip || record.ua !== req.headers['user-agent']) {
-        tokenRepo.invalidateToken(payload.tokenId);
+        await tokenRepo.invalidateToken(payload.tokenId);
         throw new Error('Suspicious device detected');
     }
 
-    tokenRepo.invalidateToken(payload.tokenId);
-    const user = await userRepo.findByUsername(payload.username);
-    const newAccessToken = jwtUtils.generateAccessToken(user);
-    const { refreshToken: newRefreshToken, tokenId: newTokenId } = jwtUtils.generateRefreshToken(user);
-    tokenRepo.saveToken(newTokenId, { userId: user.id, valid: true, ip: req.ip, ua: req.headers['user-agent'] });
+    await tokenRepo.invalidateToken(payload.tokenId);
+    const user = await getUserByUsername(payload.username);
+    if (!user) {
+        throw new Error('User not found');
+    }
+    const newAccessToken = jwtUtils.getAccessToken(user);
+    const { refreshToken: newRefreshToken, tokenId: newTokenId } = await jwtUtils.getRefreshToken(user);
+    await tokenRepo.saveToken(newTokenId, { userId: user.id, valid: true, ip: req.ip, ua: req.headers['user-agent'] });
 
     return { newAccessToken, newRefreshToken };
 };
 
 exports.logout = async (userId) => {
-    tokenRepo.revokeUserTokens(userId);
+    await tokenRepo.revokeUserTokens(userId);
 };
