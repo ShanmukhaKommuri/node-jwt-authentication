@@ -1,6 +1,6 @@
 const bcrypt = require('bcrypt')
 const jwtUtils = require('../utils/jwtUtils')
-const { createUser, getUserByuserName } = require('../repostiories/userRepository');
+const { createUser} = require('../repostiories/userRepository');
 
 exports.register = async (username, password) => {
     const hashpassword = await bcrypt.hash(password, 10);
