@@ -1,4 +1,4 @@
-const redis = require('../database/redis');
+const redis = require('../redis/redisClient');
 
 exports.saveToken = async (tokenId, data) => {
     await redis.set(`refresh:${tokenId}`, JSON.stringify(data), 'EX', 7 * 24 * 60 * 60);

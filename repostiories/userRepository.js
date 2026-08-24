@@ -1,4 +1,4 @@
-const { pgPool } = require('../database/db.js');
+const { pgPool } = require('../database/db');
 
 async function getUserByUsername(username) {
     let result = await pgPool.query('SELECT * FROM users WHERE username = $1', [username]);

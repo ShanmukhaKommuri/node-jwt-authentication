@@ -1,12 +1,6 @@
 const { verify } = require("jsonwebtoken")
 const jwt = require('jsonwebtoken')
 
-
-// getRefreshToken
-// getAccessToken
-// verifyAccessToken
-// veriyRefreshToken
-
 require('dotenv').config();
 
 const ACCESS_SECRET_KEY = process.env.ACCESS_SECRET_KEY;
