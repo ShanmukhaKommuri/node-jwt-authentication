@@ -111,8 +111,6 @@ node-jwt-authentication/
 └── .gitignore
 ```
 
-> **Note:** The repository currently uses the directory name `repostiories`. Renaming it to `repositories` would be a future cleanup.
-
 ---
 
 # Authentication Architecture
